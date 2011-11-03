@@ -24,6 +24,7 @@
 package hudson.matrix;
 
 import hudson.Util;
+import hudson.model.ParameterValue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -109,14 +110,21 @@ public final class Combination extends TreeMap<String,String> implements Compara
      * <p>
      * For example, if this combination is a=X,b=Y, then expressions like <tt>a=="X"</tt> would evaluate to
      * true.
+     * 
+     * 
      */
-    public boolean evalGroovyExpression(AxisList axes, String expression) {
+    public boolean evalGroovyExpression(AxisList axes, String expression, Iterable<ParameterValue> buildParameter) {
         if(Util.fixEmptyAndTrim(expression)==null)
             return true;
 
         Binding binding = new Binding();
         for (Map.Entry<String, String> e : entrySet())
             binding.setVariable(e.getKey(),e.getValue());
+        
+        if (buildParameter != null) {
+            for (ParameterValue pv : buildParameter) 
+                binding.setVariable(pv.getName(), pv.createVariableResolver(null).resolve(pv.getName()));
+        }
 
         binding.setVariable("index",toModuloIndex(axes));
         binding.setVariable("uniqueId",toIndex(axes));
@@ -288,4 +296,6 @@ public final class Combination extends TreeMap<String,String> implements Compara
             return !lhs || rhs;
         }
     }
+    
+    
 }

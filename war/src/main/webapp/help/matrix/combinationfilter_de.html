@@ -1,15 +1,16 @@
 <div>
   Jenkins baut standardmäßig alle möglichen Kombinationen aller Achsen auf erschöpfende Weise.
   Manchmal sind dies jedoch einfach zu viele Kombinationen oder es gibt Kombinationen, die
-  aus fachlicher Sicht nicht erwünscht sind.
+  aus fachlicher Sicht nicht erwünscht sind oder in Kombination mit Parametern keinen Sinn 
+  machen.
 
   In diesen Situationen können Sie die Matrix ausdünnen, indem Sie über einen Groovy-Ausdruck
   unerwünschte Kombinationen herausfiltern. 
 
   <p>
   Geben Sie hier einen Groovy-Ausdruck an, so werden nur diejenigen Kombinationen gebaut, für
-  die der Ausdruck <b>true</b> ergibt. Die momentanen Werte der Achsen stehen dem Ausdruck
-  dabei als initialisierte Variablen zur Verfügung.
+  die der Ausdruck <b>true</b> ergibt. Die momentanen Werte der Achsen und der Parameter 
+  stehen dem Ausdruck dabei als initialisierte Variablen zur Verfügung.
 
   <h4>Werte-basiertes Filtern</h4>
   <p>

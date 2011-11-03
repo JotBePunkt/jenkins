@@ -41,6 +41,8 @@ import hudson.model.Items;
 import hudson.model.JDK;
 import hudson.model.Job;
 import hudson.model.Label;
+import hudson.model.ParameterDefinition;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue.FlyweightTask;
 import hudson.model.ResourceController;
 import hudson.model.Result;
@@ -101,6 +103,13 @@ public class MatrixProject extends AbstractProject<MatrixProject,MatrixBuild> im
      * @see #getCombinationFilter()
      */
     private volatile String combinationFilter;
+    
+    /**
+     * This flag indicates if the {@link #combinationFilter} contains build 
+     * parameters. If set to true, the combination filter has to be evaluated
+     *  before each build. 
+     */
+    private volatile boolean combinationFilterContainsBuildParameters;
 
     /**
      * List of active {@link Builder}s configured for this project.
@@ -206,6 +215,14 @@ public class MatrixProject extends AbstractProject<MatrixProject,MatrixBuild> im
      */
     public String getCombinationFilter() {
         return combinationFilter;
+    }
+    
+    /**
+     * returns the fact that the combination filter contains build parameters. If this is true, the evaluation filter has
+     * to be evaluated before each build. 
+     */
+    public boolean getCombinationFilterContainsBuildParameters() {
+        return combinationFilterContainsBuildParameters;
     }
 
     public String getTouchStoneCombinationFilter() {
@@ -379,19 +396,37 @@ public class MatrixProject extends AbstractProject<MatrixProject,MatrixBuild> im
 
         // find all active configurations
         Set<MatrixConfiguration> active = new LinkedHashSet<MatrixConfiguration>();
+
+        combinationFilterContainsBuildParameters = checkIfFilterContainsParameter(combinationFilter);
+
         for (Combination c : axes.list()) {
-            if(c.evalGroovyExpression(axes,combinationFilter)) {
-        		LOGGER.fine("Adding configuration: " + c);
-	            MatrixConfiguration config = configurations.get(c);
-	            if(config==null) {
-	                config = new MatrixConfiguration(this,c);
-	                config.save();
-	                configurations.put(config.getCombination(), config);
-	            }
-	            active.add(config);
-        	}
+            // if the combination filter contains build parameters, the filter cannot be evaluated now, so 
+        	// we enable all combinations, the combination filter will be reevaluated on each build
+            if( combinationFilterContainsBuildParameters || c.evalGroovyExpression(axes, combinationFilter, null)) {
+                LOGGER.fine("Adding configuration: " + c);
+                MatrixConfiguration config = configurations.get(c);
+                if(config==null) {
+                    config = new MatrixConfiguration(this,c);
+                    config.save();
+                    configurations.put(config.getCombination(), config);
+                }
+                active.add(config);
+             }
         }
         this.activeConfigurations = active;
+    }
+
+	private boolean checkIfFilterContainsParameter(String filter) {
+        ParametersDefinitionProperty paramDefinitionProperty = getProperty(ParametersDefinitionProperty.class);
+        
+        if (isParameterized() && filter != null) {
+            for(ParameterDefinition parameterDefinition : paramDefinitionProperty.getParameterDefinitions()) {
+                if (filter.contains(parameterDefinition.getName())) {
+                    return true;
+                }
+             }
+        }
+        return false;
     }
 
     private File getConfigurationsDir() {

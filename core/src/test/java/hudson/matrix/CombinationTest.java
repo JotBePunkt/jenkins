@@ -57,6 +57,6 @@ public class CombinationTest extends TestCase {
     }
 
     private boolean eval(Combination c, String exp) {
-        return c.evalGroovyExpression(axes, exp);
+        return c.evalGroovyExpression(axes, exp, null);
     }
 }

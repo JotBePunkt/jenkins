@@ -1,13 +1,15 @@
 <div>
   By default, Jenkins builds all the possible combinations of axes exhaustively. But sometimes this is too many,
-  or may contain combinations that don't make sense.
+  or may contain combinations that don't make sense or when the build is parametrized some combinations don't 
+  make sense with specific parameter values. 
+  
   In such a situation, you can make the matrix sparse by filtering out combinations that you don't want through
   a Groovy expression that returns true or false.
 
   <p>
   When you specify a Groovy expression here, only the combinations that result in <b>true</b>
-  will be built. In evaluating the expression, axes are exposed as variables (with their values set
-  to the current combination evaluated).
+  will be built. In evaluating the expression, axes and the parameters are exposed as variables (with their 
+  values set to the current combination evaluated).
 
   <h4>Filtering based on values</h4>
   <p>

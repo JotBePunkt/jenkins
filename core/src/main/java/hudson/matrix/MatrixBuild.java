@@ -29,15 +29,12 @@ import hudson.matrix.listeners.MatrixBuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Cause.UpstreamCause;
 import hudson.model.Executor;
 import hudson.model.Fingerprint;
-import jenkins.model.Jenkins;
-import hudson.model.JobProperty;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Result;
-import hudson.model.Cause.UpstreamCause;
-import hudson.tasks.Publisher;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +44,8 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+
+import jenkins.model.Jenkins;
 
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -245,14 +244,18 @@ public class MatrixBuild extends AbstractBuild<MatrixProject,MatrixBuild> {
             final int n = getNumber();
             
             String touchStoneFilter = p.getTouchStoneCombinationFilter();
+            String combinationFilter = p.getCombinationFilter();
             Collection<MatrixConfiguration> touchStoneConfigurations = new HashSet<MatrixConfiguration>();
             Collection<MatrixConfiguration> delayedConfigurations = new HashSet<MatrixConfiguration>();
+            ParametersAction parameters = getAction(ParametersAction.class);
+            
             for (MatrixConfiguration c: activeConfigurations) {
-                if (!MatrixBuildListener.buildConfiguration(MatrixBuild.this, c))
+            	if (!MatrixBuildListener.buildConfiguration(MatrixBuild.this, c))
                     continue; // skip rebuild
-                if (touchStoneFilter != null && c.getCombination().evalGroovyExpression(p.getAxes(), p.getTouchStoneCombinationFilter())) {
+                if (touchStoneFilter != null && c.getCombination().evalGroovyExpression(p.getAxes(), touchStoneFilter, parameters)) {
                     touchStoneConfigurations.add(c);
-                } else {
+                } else if (!p.getCombinationFilterContainsBuildParameters() ||
+                        c.getCombination().evalGroovyExpression(p.getAxes(), combinationFilter, parameters)) {
                     delayedConfigurations.add(c);
                 }
             }
